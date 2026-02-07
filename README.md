@@ -1,162 +1,89 @@
 # QSP Stage180 — SDK Entry Point (v2.0 Preview)
 
-**QSP (Quantum-Safe Protocol)** Stage180 is the point where value shifts from  
-**“correctness” → “being used.”**
+![CI](https://github.com/mokkunsuzuki-code/stage180/actions/workflows/stage180-ci.yml/badge.svg)
 
-Stage180 fixes a **minimal, misuse-resistant SDK interface** and proves — by execution —
-that security properties are enforced **in real communication**, not just on paper.
-
-> ✅ Touch it  
-> ✅ Break it  
-> ✅ See attacks fail  
+> **Attack-driven SDK entry point.**  
+> Security regressions are automatically detected by CI.
 
 ---
 
-## What Stage180 Delivers
+## What this is
+QSP Stage180 provides a **minimal SDK entry point** that external developers
+and researchers can integrate directly into their applications.
 
-### Fixed SDK API (6 functions only)
+Security properties are not just documented — they are **enforced by
+reproducible attack runners executed in CI**.
 
-```python
-sdk.session_start(role, peer)   # establish session
-sdk.send(data)                  # send application data
-sdk.recv()                      # receive application data
-sdk.rekey()                     # advance epoch
-sdk.export_key_receipt()        # cryptographic provenance artifact
-sdk.policy_hook(policy)         # (pre-session) policy injection
-This API is stable.
-All future work (crypto, QKD, PQC, proofs) plugs behind this boundary.
+---
 
-Why Stage180 Is the Value Jump
-Stage	Value Source
-170–179	Correctness, formal reasoning, proofs
-180+	Usability, adoption, experiential review
-At Stage180:
+## Quick start (10 minutes)
 
-Review shifts from “Does this look correct?”
-→ “I ran it. Attacks fail.”
-
-SDK users do not need protocol knowledge.
-
-CI can execute attacks, not just unit tests.
-
-Quick Start (1 minute)
-Requirements
-Python 3.10+
-
-macOS / Linux
-
-Setup
-git clone <this-repo>
-cd stage180
-python -m venv .venv
-source .venv/bin/activate
+### Install
+```bash
 pip install -e .
-10-Line Demo (Real TCP Communication)
-Terminal 1 — Server
+Run server (10 lines)
 python examples/hello_10lines_server.py
+Run client (10 lines)
+python examples/hello_10lines_client.py
 Expected output (example):
 
-[server] started session_id=1532634194952149445 epoch=1 mode=QKD_MIXED
-[server] recv: ping
-[server] receipt: session_id=1532634194952149445 epoch=1 mode=QKD_MIXED chain=...
-Terminal 2 — Client
-python examples/hello_10lines_client.py
-Expected output:
-
-[client] started session_id=1532634194952149445 epoch=1 mode=QKD_MIXED
+[client] started session_id=... epoch=1 mode=QKD_MIXED
 [client] recv: pong
-[client] receipt: session_id=1532634194952149445 epoch=1 mode=QKD_MIXED chain=...
-✔ Real TCP
-✔ Shared session_id
-✔ Identical receipt chain
+[client] receipt: session_id=... chain=...
+What CI guarantees
+This repository is protected by attack-driven CI.
 
-Security as an Experience: Attack-04 (Wrong Session ID)
-Stage180 does not claim security — it demonstrates rejection.
+Each push automatically verifies:
 
-Run the attack
-./attack_scenarios/attack_04_wrong_session_id/run.sh
-What this test does
-Normal case
+Normal communication succeeds
 
-SDK ↔ SDK communication
+Tampered frames are deterministically rejected
 
-PASS
+Security regressions are blocked before merge
 
-Tampered case
+See docs/STAGE180_CLAIMS.md for CI-bound security claims.
 
-Attacker injects a frame with a forged session_id
-
-SDK detects mismatch
-
-Fail-closed with WrongSessionID
-
-Expected output (excerpt)
-[OK] normal case PASS
-[OK] tamper rejected (WrongSessionID): expected X got Y
-[OK] tamper case PASS
-This is not a unit test.
-This is live attack execution.
-
-What Is Being Enforced (Stage180 Scope)
+Security scope
 Guaranteed
-Session binding (SID)
+Session binding (wrong session_id is rejected)
 
-Fail-closed semantics
+Fail-closed behavior on tampering
 
-Epoch monotonicity
+Deterministic rejection path
 
-Misuse resistance at API boundary
+Non-goals
+Replay resistance
 
-Verifiable key provenance (KeyReceipt)
+Side-channel resistance
 
-Explicitly Out of Scope (for this stage)
-AEAD encryption (stubbed)
+Hardware QKD behavior
 
-PQC / QKD internals
+Performance benchmarking
 
-Performance optimization
+Non-goals are explicitly documented to keep reviews precise.
 
-These are added behind the same SDK interface in later stages.
+Attack coverage (CI-enforced)
+Attack scenario	Status	CI
+Wrong Session ID	Prevented	✅
+Replay attack	Planned	⏳
+Epoch rollback	Planned	⏳
+Algorithm downgrade	Planned	⏳
+Repository structure
+.
+├── qsp/                    # SDK entry point
+├── examples/               # 10-line demos
+├── attack_scenarios/       # Reproducible attacks
+├── docs/                   # Security claims
+├── .github/workflows/      # CI enforcement
+├── README.md
+└── pyproject.toml
+Why Stage180 matters
+Stage170–179 focused on correctness and rigor.
+Stage180 shifts the value source to usability and enforcement.
 
-KeyReceipt: First-Class Security Artifact
-Every session can export:
-
-receipt = sdk.export_key_receipt()
-Includes:
-
-session_id
-
-epoch
-
-mode (PQC_ONLY / QKD_MIXED)
-
-transcript hash
-
-receipt chain hash
-
-policy id
-
-traffic metadata
-
-This enables:
-
-audit
-
-compliance
-
-cross-implementation comparison
-
-Design Philosophy
-Fail closed, always
-
-Small API surface
-
-Attacks must be runnable
-
-Formal proofs must map to code
-
-“Looks secure” is not enough
+Security claims become executable.
+Reviews become hands-on.
+Breakage becomes immediately visible.
 
 License
-MIT License
-© 2026 Motohiro Suzuki
+MIT License © 2025 Motohiro Suzuki
